@@ -9,6 +9,8 @@ var firemode = 1;
 var screenstate = 0;
 var transitiondir = 2;
 var flashy = 1;
+var game = new gameObj();
+var player = new playerObj();
 
 var startScreen = function(x) {
     background(abs(255*invert-71), abs(255*invert - 71), abs(255*invert -71));
