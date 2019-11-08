@@ -1,29 +1,29 @@
 var sketchProc=function(processingInstance){ with (processingInstance){
-size(400, 400); 
+size(600, 600); 
 frameRate(60);
 
-var keys = [];
-var control = 1;
-var invert = 0;
-var firemode = 1;
-var screenstate = 0;
-var transitiondir = 2;
-var flashy = 1;
-var game = new gameObj();
-var player = new playerObj();
+keys = [];
+control = 1;
+invert = 0;
+firemode = 1;
+screenstate = 0;
+transitiondir = 2;
+flashy = 1;
+game = new gameObj();
+player = new playerObj();
 
 var startScreen = function(x) {
     background(abs(255*invert-71), abs(255*invert - 71), abs(255*invert -71));
     fill(abs(255*invert -150*flashy), abs(255*invert -150*flashy), abs(255*invert -25));
     textSize(50);
-    text("\"Working Title\"", 40-x, 80);
+    text("\"Working Title\"", 140-x, 80);
     fill(abs(255*invert -255), abs(255*invert -255), abs(255*invert -255));
     textSize(30);
-    text("START GAME", 100-x, 240);
-    text("OPTIONS", 135-x,300);
+    text("START GAME", 200-x, 240);
+    text("OPTIONS", 235-x,300);
     textSize(15);
-    text("Ryan Slatten", 10-x, 380);
-    if(flashy > 1) {
+    text("Ryan Slatten", 10-x, 580);
+    if (flashy > 1) {
         flashy -= 1;
     }
 };
@@ -31,47 +31,47 @@ var startScreen = function(x) {
 var optionsScreen = function(x) {
     fill(abs(255*invert -255), abs(255*invert -255), abs(255*invert -255));
     textSize(25);
-    text("Controls:", 100+x, 50);
-    if(control < 0) {
-        text("ARROWS", 220+x, 50);
+    text("Controls:", 200+x, 50);
+    if (control < 0) {
+        text("ARROWS", 320+x, 50);
     } else {
-        text("WASD", 220+x, 50);
+        text("WASD", 320+x, 50);
     }
-    text("Invert Colors:", 50+x, 100);
-    if(invert) {
-        text("YES", 230+x, 100);
+    text("Invert Colors:", 150+x, 100);
+    if (invert) {
+        text("YES", 330+x, 100);
     } else {
-        text(" NO", 230+x, 100);
+        text(" NO", 330+x, 100);
     }
-    text("Fire Mode:", 80+x, 150);
-    if(firemode > 0) {
-        text("MOUSE", 220+x, 150);
+    text("Fire Mode:", 180+x, 150);
+    if (firemode > 0) {
+        text("MOUSE", 320+x, 150);
     } else {
-        text("SPACE", 220+x, 150);
+        text("SPACE", 320+x, 150);
     }
-    text("Main Menu", 135+x, 300);
+    text("Main Menu", 235+x, 300);
 };
 
 draw = function() {
-    if(screenstate === 1) {
+    if (screenstate === 1) {
         // Begin Game
-    } else if(screenstate === 0) {
+    } else if (screenstate === 0) {
         startScreen(transitiondir);
-    } else if(screenstate === -2) {
-        if(transitiondir > 0) {
-            if(transitiondir < 420) {
+    } else if (screenstate === -2) {
+        if (transitiondir > 0) {
+            if (transitiondir < 620) {
                 startScreen(transitiondir);
-                optionsScreen(400-transitiondir);
-                transitiondir += 30;
+                optionsScreen(600-transitiondir);
+                transitiondir += 140;
             } else {
                 transitiondir = -2;
                 screenstate = -1;
             }
         } else {
-            if(transitiondir > -420) {
-                startScreen(transitiondir+400);
-                optionsScreen(400-(transitiondir+400));
-                transitiondir -= 30;
+            if (transitiondir > -620) {
+                startScreen(transitiondir+600);
+                optionsScreen(600-(transitiondir+600));
+                transitiondir -= 140;
             } else {
                 transitiondir = 2;
                 screenstate = 0;
@@ -84,34 +84,36 @@ draw = function() {
 };
 
 var mousePressed = function() {
-    if(screenstate > 0) {
-        // Begin Game
-    } else if(screenstate < 0) {
-        if(mouseX > 220 && mouseX < 330 && mouseY > 30 && mouseY < 60) {
+    if (screenstate > 0) {
+        if (control > 0) {
+            // Fire bullet
+        }
+    } else if( screenstate < 0) {
+        if (mouseX > 320 && mouseX < 430 && mouseY > 30 && mouseY < 60) {
         control *= -1;
-    } else if(mouseX > 230 && mouseX < 280 && mouseY > 80 && mouseY < 110) {
+    } else if (mouseX > 330 && mouseX < 380 && mouseY > 80 && mouseY < 110) {
         if(invert === 1) {
             invert = 0;
         } else {
             invert = 1;
         }
-    } else if(mouseX > 220 && mouseX < 330 && mouseY > 130 && mouseY < 160) {
+    } else if (mouseX > 320 && mouseX < 430 && mouseY > 130 && mouseY < 160) {
         firemode *= -1;
-    } else if(mouseX > 130 && mouseX < 270 && mouseY > 280 && mouseY < 305) {
+    } else if (mouseX > 230 && mouseX < 370 && mouseY > 280 && mouseY < 305) {
         screenstate = -2;
     }
     } else {
-        if(screenstate === 0 && mouseX > 100 && mouseX < 290 && mouseY > 220 && mouseY < 240) {
-        //screenstate = 1;
-    } else if(mouseX > 130 && mouseX < 270 && mouseY > 280 && mouseY < 305) {
+        if (screenstate === 0 && mouseX > 200 && mouseX < 390 && mouseY > 220 && mouseY < 240) {
+            //screenstate = 1;
+    } else if (mouseX > 230 && mouseX < 370 && mouseY > 280 && mouseY < 305) {
         screenstate = -2;
-    } else if(mouseX > 30 && mouseX < 360 && mouseY > 40 && mouseY < 90) {
-        if(flashy < 4) {
+    } else if (mouseX > 130 && mouseX < 460 && mouseY > 40 && mouseY < 90) {
+        if (flashy < 4) {
            flashy *= 15; 
         }
     }
     }
-    if((screenstate === 0 || screenstate === -1) && mouseX > 130 && mouseX < 270 && mouseY > 280 && mouseY < 300) {
+    if ((screenstate === 0 || screenstate === -1) && mouseX > 130 && mouseX < 270 && mouseY > 280 && mouseY < 300) {
         screenstate = -2;
     }
 };
@@ -123,7 +125,7 @@ var keyReleased = function() {
 };
 
 var mouseScrolled = function() {
-    noLoop();
+    
 };
 
 }};
