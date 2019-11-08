@@ -15,12 +15,12 @@ player = new playerObj();
 var startScreen = function(x) {
     background(abs(255*invert-71), abs(255*invert - 71), abs(255*invert -71));
     fill(abs(255*invert -150*flashy), abs(255*invert -150*flashy), abs(255*invert -25));
-    textSize(50);
-    text("\"Working Title\"", 140-x, 80);
+    textSize(60);
+    text("Bool's Realm 69", 120-x, 80);
     fill(abs(255*invert -255), abs(255*invert -255), abs(255*invert -255));
-    textSize(30);
-    text("START GAME", 200-x, 240);
-    text("OPTIONS", 235-x,300);
+    textSize(40);
+    text("START GAME", 180-x, 280);
+    text("OPTIONS", 215-x,400);
     textSize(15);
     text("Ryan Slatten", 10-x, 580);
     if (flashy > 1) {
@@ -123,9 +123,8 @@ var keyPressed = function() {
 var keyReleased = function() {
     keys[keyCode] = 0;
 };
-
 var mouseScrolled = function() {
-    
+    screentate = -2;
 };
 
 }};
