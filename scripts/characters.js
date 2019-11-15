@@ -1,4 +1,4 @@
-var playerObj = function(x,y) {
+playerObj = function(x,y) {
     this.pos = new PVector(x,y);
     this.dir = 0;
 };
@@ -12,7 +12,7 @@ playerObj.prototype.draw = function() {
 
 };
 
-var minionObj = function(x,y) {
+minionObj = function(x,y) {
     this.pos = new PVector(x,y);
     this.dir = 0;
 };
@@ -21,14 +21,21 @@ minionObj.prototype.move = function(direction) {
 
 };
 
-var bossObj = function(x,y) {
+minionObj.prototype.draw = function() {
+
+};
+
+bossObj = function(x,y) {
     this.x = x;
     this.y = y;
 
 
 };
 
-var gameObj = function() {
-    this.player = new playerObj();
-    this.minions = [];
+bossObj.prototype.move = function(direction) {
+
+};
+
+bossObj.prototype.draw = function(direction) {
+
 };
