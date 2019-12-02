@@ -1,25 +1,60 @@
 var sketchProc=function(processingInstance){ with (processingInstance){
 size(400, 400); 
 frameRate(60);
+/* 
+    @pjs preload=
+        'data/title.png',
+        'data/snowman.png',
+        'data/pRightFace.png'; 
+*/
+var b = loadImage('data/title.png');
+var keys = [];
+var control = 1, invert = 0;
+var over = false;
+var transitiondir = 2, flashy = 1, transparent = 0;
+var gamex = 0, gamey = 0;
+var screenstate = 0;
+var walls = [], grounds = [];
 
-playerObj = function(x,y) {
+var playerObj = function(x,y) {
     this.pos = new PVector(x,y);
     this.dir = 0;
     this.health = 100;
 };
 
-playerObj.prototype.move = function(direction) {
-    x = cos(direction)*2;
-    y = sin(direction)*2;
-    move = new PVector(x,y);
-    this.pos.add(move);
+playerObj.prototype.move = function() {
+    if(control === 1) {
+        if (keys[87] === 1) {
+            this.pos.y -= 4;
+        } 
+        if (keys[83] === 1) {
+            this.pos.y += 4;
+        }
+        if (keys[65] === 1) {
+            this.pos.x -= 4;
+        }
+        if (keys[68] === 1) {
+            this.pos.x += 4;
+        }
+    } else {
+        
+    }
+    gamex = this.pos.x - 200;
+    gamey = this.pos.y - 200;
+    if (gamex < 0) {
+        gamex = 0;
+    }
+    if (gamey < 0) {
+        gamey = 0;
+    }
 };
 
 playerObj.prototype.draw = function() {
-    
+    fill(39, 0, 196);
+    ellipse(this.pos.x,this.pos.y,10,20);
 };
 
-bulletObj = function(x,y, direction) {
+var bulletObj = function(x,y,direction) {
     this.pos = new PVector(x,y);
     this.v = new PVector(cos(direction)*5,sin(direction)*5);
 };
@@ -33,7 +68,7 @@ bulletObj.prototype.draw = function() {
     ellipse(this.pos.x,this.pos.y,3,3);
 };
 
-minionObj = function(x,y) {
+var minionObj = function(x,y) {
     this.pos = new PVector(x,y);
     this.dir = 0;
 };
@@ -43,10 +78,10 @@ minionObj.prototype.action = function(direction) {
 };
 
 minionObj.prototype.draw = function() {
-
+    
 };
 
-bossObj = function(x,y) {
+var bossObj = function(x,y) {
     this.x = x;
     this.y = y;
 };
@@ -59,52 +94,85 @@ bossObj.prototype.draw = function(direction) {
 
 };
 
-keys = [];
-control = 1, invert = 0, firemode = 1;
-screenstate = 0, over = false;
-transitiondir = 2, flashy = 1, transparent = 0;
-player = new playerObj, minions = [], bosses = [], bullets = [];
-walls = [];
-grounds = [];
+var wallObj = function(x,y) {
+    this.pos = new PVector(x,y);
+};
 
-sampleMap = [
-    "wwwww",
-    "wgggw",
-    "wgggw",
-    "wgggw",
-    "wwgww",
-    ".wgw.",
-    ".wgw.",
-    ".wgw.",
-    ".wgw.",
-    ".wgw.",
-    "wwgww",
-    "wgggw",
-    "wgggw",
-    "wgggw",
-    "wwgww",
-    ".wgw.",
-    ".wgw.",
-    ".wgw.",
-    ".wgw.",
-    ".wgw.",
-    "wwgww",
-    "wgggw",
-    "wgggw",
-    "wgggw",
-    "wwwww",
+wallObj.prototype.draw = function() {
+    noStroke();
+    fill(194,100,0);
+    rect(this.pos.x,this.pos.y, 20,20);
+    stroke(0,0,0);
+};
+    
+var groundObj = function(x,y) {
+    this.pos = new PVector(x,y);
+};
+
+groundObj.prototype.draw = function() {
+    fill(255, 140, 0);
+    rect(this.pos.x,this.pos.y,20,20);
+};
+
+var player = new playerObj(200,200), minions = [], bosses = [], bullets = [];
+
+var sampleMap = [
+    "......wwwwwwww......",
+    "......wggggggw......",
+    "......wggggggw......",
+    "......wggggggw......",
+    "......wggggggw......",
+    "......wggggggw......",
+    "......wggggggw......",
+    "......wwwggwww......",
+    "......wwwggwww......",
+    "......wwwggwww......",
+    "......wwwggwww......",
+    "......wwwggwww......",
+    "......wwwggwww......",
+    "......wwwggwww......",
+    "......wwwggwww......",
+    "......wggggggw......",
+    "......wggggggw......",
+    "......wggggggw......",
+    "......wggggggw......",
+    "......wggggggw......",
+    "......wggggggw......",
+    "......wwggwwww......",
+    "......wwwwwwww......",
+    "......wggggggw......",
+    "......wggggggw......",
+    "......wggggggw......",
+    "......wggggggw......",
+    "......wggggggw......",
+    "......wggggggw......",
+    "......wwwggwww......",
+    "......wwwggwww......",
+    "......wwwggwww......",
+    "......wwwggwww......",
+    "......wwwggwww......",
+    "......wwwggwww......",
+    "......wwwggwww......",
+    "......wwwggwww......",
+    "......wggggggw......",
+    "......wggggggw......",
+    "......wggggggw......",
+    "......wggggggw......",
+    "......wggggggw......",
+    "......wggggggw......",
+    "......wwwwwwww......",
     ];
     
-    function initMap() {
-        for (j = 0; j < sampleMap.length; j++) {
-            for (i = 0; i < sampleMap[j].length; i++) {
-                if (sampleMap[j][i] === "w") {
-                    walls.push(new wallObj(i*20,j*20));
-                } else if (sampleMap[j][i] === 'g') {
-                    grounds.push(new groundObj(i*20,j*20));
-                } 
-            }
+var initMap = function() {
+    for (var j = 0; j < sampleMap.length; j++) {
+        for (var i = 0; i < sampleMap[j].length; i++) {
+            if (sampleMap[j][i] === "w") {
+                walls.push(new wallObj(i*20,j*20));
+            } else if (sampleMap[j][i] === 'g') {
+                grounds.push(new groundObj(i*20,j*20));
+            } 
         }
+    }
         /*
         for (j = 0; j < sampleMap.length; j++) {
             for (i = 0; i < sampleMap[j].length; i++) {
@@ -122,20 +190,12 @@ sampleMap = [
             }
         }
         */
-    };
-    
-    wallObj = function(x,y) {
-        this.pos = new PVector(x,y);
-    };
-    
-    groundObj = function(x,y) {
-        this.pos = new PVector(x,y);
-    };
+};
 
-function startScreen(x) {
+var startScreen = function(x) {
     background(abs(255*invert), abs(255*invert), abs(255*invert));
+    image(b, 20,150,360,360);
     fill(abs(255*invert -150*flashy), abs(255*invert -150*flashy), abs(255*invert -25), transparent);
-    
     textSize(50);
     text("Bool's Realm", 60-x, 80);
     fill(abs(255*invert -255), abs(255*invert -255), abs(255*invert -255), transparent);
@@ -148,7 +208,7 @@ function startScreen(x) {
         flashy -= 1;
     }
     noStroke();
-    for(i = 0; i < 3; i++) {
+    for(var i = 0; i < 3; i++) {
         fill(abs(255*invert),abs(255*invert),abs(255*invert),70+12*i);
         rect(100+transparent+i*6,0,400,400);
         fill(abs(255*invert),abs(255*invert),abs(255*invert),60+5*i);
@@ -157,7 +217,7 @@ function startScreen(x) {
     stroke(0,0,0);
 };
 
-function optionsScreen(x) {
+var optionsScreen = function(x) {
     fill(abs(255*invert -255), abs(255*invert -255), abs(255*invert -255));
     textSize(25);
     text("Controls:", 100+x, 50);
@@ -172,41 +232,16 @@ function optionsScreen(x) {
     } else {
         text(" NO", 230+x, 100);
     }
-    text("Fire Mode:", 80+x, 150);
-    if (firemode > 0) {
-        text("MOUSE", 220+x, 150);
-    } else {
-        text("SPACE", 220+x, 150);
-    }
     text("Main Menu", 135+x, 300);
 };
 
-function overScreen() {
+var overScreen = function() {
 
 };
 
-
-
-
-
-
-
-
-
-wallObj.prototype.draw = function() {
-    noStroke();
-    fill(194,100,0);
-    rect(this.x,this.y, 20,20);
-    stroke(0,0,0);
-};
-
-groundObj.prototype.draw = function() {
-
-};
-
-update = function() {
+var update = function() {
     background(abs(255*invert -15),abs(255*invert -15),abs(255*invert -15));
-    for (i = 0; i < walls.length; i++) {
+    for (var i = 0; i < walls.length; i++) {
         walls[i].draw();
     }
     for (i = 0; i < grounds.length; i++) {
@@ -228,10 +263,11 @@ update = function() {
     player.draw();
 };
 
-initMap();
-
 draw = function() {
     if (screenstate === 1) {
+        pushMatrix();
+        translate(gamex,gamey);
+        popMatrix();
         update();
         if (over) {
             screenstate = -3;
@@ -269,11 +305,12 @@ draw = function() {
     }
 };
 
-mousePressed = function() {
+var mousePressed = function() {
     if(transparent > 254) {
-        if (screenstate === 1 && control === 1) {
+        if (screenstate === 1) {
             // Fire bullet
-            
+            screenstate = 0;
+            transparent = 0;
         } else if (screenstate === -1) {
             if (mouseX > 220 && mouseX < 330 && mouseY > 30 && mouseY < 60) {
                 control *= -1;
@@ -283,13 +320,12 @@ mousePressed = function() {
                 } else {
                     invert = 1;
                 }
-            } else if (mouseX > 220 && mouseX < 330 && mouseY > 130 && mouseY < 160) {
-                firemode *= -1;
             } else if (mouseX > 130 && mouseX < 270 && mouseY > 280 && mouseY < 305) {
                 screenstate = -2;
             }
         } else if (screenstate === 0) {
             if (mouseX > 100 && mouseX < 290 && mouseY > 220 && mouseY < 240) {
+                initMap();
                 screenstate = 1;
             } else if (mouseX > 130 && mouseX < 270 && mouseY > 280 && mouseY < 305) {
                 screenstate = -2;
@@ -299,23 +335,20 @@ mousePressed = function() {
                 }
             }
         } else if (screenstate === -3) {
-            player = new playerObj, minions = [], bosses = [];
+            var player = new playerObj(200,200);
+            var minions = [], bosses = [];
             over = false;
             screenstate = 0;
         }
     }
 };
 
-keyPressed = function() {
+var keyPressed = function() {
     keys[keyCode] = 1;
 };
 
-keyReleased = function() {
+var keyReleased = function() {
     keys[keyCode] = 0;
-};
-
-mouseScrolled = function() {
-    screentate = -2;
 };
 
 // each block is a 10x10 space
