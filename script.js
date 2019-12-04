@@ -1,3 +1,16 @@
+//  *HOW GAME IS PLAYED*  \\
+// The players goal is to find the exit to each level and raise their score defeating enemies and finding treasures
+// The game starts at level 1 and can either go on forever or stop at level 10
+// each level is a 10x10 block grid and each block is a 25x25 space
+// each map has a starting room, an exit room, and a path between them
+// the room types are boss, normal, and treasure
+// normal rooms hold regular minions to fight. Common
+// boss rooms hold a boss that is difficult to defeat but grants a reward. Uncommon
+// treasure rooms hold a reward for the player. Rare
+// all rooms must be connected with a pathway
+// there can be multiple paths to an exit, and there can be multiple paths in a row
+// s is the starting room, . is empty space, r is a room, p is a pathway, and e is the exit room
+
 var sketchProc=function(processingInstance){ with (processingInstance){
 size(400, 400); 
 frameRate(60);
@@ -5,12 +18,17 @@ frameRate(60);
     @pjs preload=
         'data/title.png',
         'data/snowman.png',
-        'data/pRightFace.png'; 
+        'data/pRightFace.png'
+    ; 
 */
+
+// Images:
 var b = loadImage('data/title.png');
+
+// Global variables:
 var keys = [];
-var control = 1, invert = 0;
-var over = false;
+var control = 1, invert = 0, leveltype = 1;
+var over = false, score = 0, level = 1;
 var transitiondir = 2, flashy = 1, transparent = 0;
 var gamex = 0, gamey = 0;
 var screenstate = 0;
@@ -37,15 +55,30 @@ playerObj.prototype.move = function() {
             this.pos.x += 4;
         }
     } else {
-        
+        if (keys[38] === 1) {
+            this.pos.y -= 4;
+        } 
+        if (keys[40] === 1) {
+            this.pos.y += 4;
+        }
+        if (keys[37] === 1) {
+            this.pos.x -= 4;
+        }
+        if (keys[39] === 1) {
+            this.pos.x += 4;
+        }
     }
     gamex = this.pos.x - 200;
     gamey = this.pos.y - 200;
     if (gamex < 0) {
         gamex = 0;
+    } else if (gamex > 10000) {
+        gamex = 9600;
     }
     if (gamey < 0) {
         gamey = 0;
+    } else if (gamey > 10000) {
+        gamey = 9600;
     }
 };
 
@@ -114,24 +147,28 @@ groundObj.prototype.draw = function() {
     rect(this.pos.x,this.pos.y,20,20);
 };
 
-var player = new playerObj(200,200), minions = [], bosses = [], bullets = [];
+var player = new playerObj(200,200);
+var minions = [], bosses = [], bullets = [];
 
 var sampleMap = [
-    "......wwwwwwww......",
-    "......wggggggw......",
-    "......wggggggw......",
-    "......wggggggw......",
-    "......wggggggw......",
-    "......wggggggw......",
-    "......wggggggw......",
-    "......wwwggwww......",
-    "......wwwggwww......",
-    "......wwwggwww......",
-    "......wwwggwww......",
-    "......wwwggwww......",
-    "......wwwggwww......",
-    "......wwwggwww......",
-    "......wwwggwww......",
+    "......wwwwwwwwww......",
+    "......wggggggggw......",
+    "......wggggggggw......",
+    "......wggggggggw......",
+    "......wggggggggw......",
+    "......wggggggggw......",
+    "......wggggggggw......",
+    "......wggggggggw......",
+    "......wggggggggw......",
+    "......wggggggggw......",
+    "......wwwggggwww......",
+    "......wwwggggwww......",
+    "......wwwggggwww......",
+    "......wwwggggwww......",
+    "......wwwggggwww......",
+    "......wwwggggwww......",
+    "......wwwggggwww......",
+    "......wwwggggwww......",
     "......wggggggw......",
     "......wggggggw......",
     "......wggggggw......",
@@ -139,7 +176,7 @@ var sampleMap = [
     "......wggggggw......",
     "......wggggggw......",
     "......wwggwwww......",
-    "......wwwwwwww......",
+    "......wwggwwww......",
     "......wggggggw......",
     "......wggggggw......",
     "......wggggggw......",
@@ -173,23 +210,6 @@ var initMap = function() {
             } 
         }
     }
-        /*
-        for (j = 0; j < sampleMap.length; j++) {
-            for (i = 0; i < sampleMap[j].length; i++) {
-                if (sampleMap[j][i] === "s") {
-                    startroom = new startObj(i*200, j*200);
-                    player.x = i*200 + 100;
-                    player.y = j*200 + 100;
-                } else if (sampleMap[j][i] === 'p') {
-                    paths.push(new pathObj(i*200, j*200));
-                } else if (sampleMap[j][i] === 'r') {
-                    rooms.push(new roomObj(i*200, j*200));
-                } else if (sampleMap[j][i] === 'e') {
-                    exitroom = new exitObj(i*200, j*200);
-                }
-            }
-        }
-        */
 };
 
 var startScreen = function(x) {
@@ -232,6 +252,12 @@ var optionsScreen = function(x) {
     } else {
         text(" NO", 230+x, 100);
     }
+    text("Infinite Levels:", 40+x, 150);
+    if (leveltype > 0) {
+        text("OFF", 230+x, 150);
+    } else {
+        text("ON", 230+x, 150);
+    }
     text("Main Menu", 135+x, 300);
 };
 
@@ -239,8 +265,12 @@ var overScreen = function() {
 
 };
 
+var drawMap = function() {
+
+};
+
 var update = function() {
-    background(abs(255*invert -15),abs(255*invert -15),abs(255*invert -15));
+    background(abs(255*invert -25),abs(255*invert -25),abs(255*invert -25));
     for (var i = 0; i < walls.length; i++) {
         walls[i].draw();
     }
@@ -263,115 +293,6 @@ var update = function() {
     player.draw();
 };
 
-draw = function() {
-    if (screenstate === 1) {
-        pushMatrix();
-        translate(gamex,gamey);
-        popMatrix();
-        update();
-        if (over) {
-            screenstate = -3;
-        }
-    } else if (screenstate === 0) {
-        if(transparent < 255) {
-            transparent+=1.5;
-        }
-        startScreen(transitiondir);
-    } else if (screenstate === -1) {
-        background(abs(255*invert), abs(255*invert), abs(255*invert));
-        optionsScreen(transitiondir);
-    } else if (screenstate === -2) {
-        if (transitiondir > 0) {
-            if (transitiondir < 620) {
-                startScreen(transitiondir);
-                optionsScreen(600-transitiondir);
-                transitiondir += 140;
-            } else {
-                transitiondir = -2;
-                screenstate = -1;
-            }
-        } else {
-            if (transitiondir > -620) {
-                startScreen(transitiondir+600);
-                optionsScreen(600-(transitiondir+600));
-                transitiondir -= 140;
-            } else {
-                transitiondir = 2;
-                screenstate = 0;
-            }
-        }
-    } else {
-        overScreen();
-    }
-};
-
-var mousePressed = function() {
-    if(transparent > 254) {
-        if (screenstate === 1) {
-            // Fire bullet
-            screenstate = 0;
-            transparent = 0;
-        } else if (screenstate === -1) {
-            if (mouseX > 220 && mouseX < 330 && mouseY > 30 && mouseY < 60) {
-                control *= -1;
-            } else if (mouseX > 230 && mouseX < 280 && mouseY > 80 && mouseY < 110) {
-                if(invert === 1) {
-                    invert = 0;
-                } else {
-                    invert = 1;
-                }
-            } else if (mouseX > 130 && mouseX < 270 && mouseY > 280 && mouseY < 305) {
-                screenstate = -2;
-            }
-        } else if (screenstate === 0) {
-            if (mouseX > 100 && mouseX < 290 && mouseY > 220 && mouseY < 240) {
-                initMap();
-                screenstate = 1;
-            } else if (mouseX > 130 && mouseX < 270 && mouseY > 280 && mouseY < 305) {
-                screenstate = -2;
-            } else if (mouseX > 30 && mouseX < 360 && mouseY > 40 && mouseY < 90) {
-                if (flashy < 4) {
-                   flashy *= 15; 
-                }
-            }
-        } else if (screenstate === -3) {
-            var player = new playerObj(200,200);
-            var minions = [], bosses = [];
-            over = false;
-            screenstate = 0;
-        }
-    }
-};
-
-var keyPressed = function() {
-    keys[keyCode] = 1;
-};
-
-var keyReleased = function() {
-    keys[keyCode] = 0;
-};
-
-// each block is a 10x10 space
-// each map has a starting room, an exit room, and a path between them
-// the room types are boss, normal, and treasure
-// normal rooms hold regular minions to fight. Common
-// boss rooms hold a boss that is difficult to defeat but grants a reward. Uncommon
-// treasure rooms hold a reward for the player. Rare
-// all rooms must be connected with a pathway
-// there can be multiple paths to an exit, and there can be multiple paths in a row
-// s is the starting room
-// . is empty space
-// r is a room
-// p is a pathway
-// e is the exit room
-
-//startroom, exitroom;
-//rooms = [];
-//paths = [];
-
-
-
-/*
 startObj = function(x,y) {
     this.walls = [];
     for (i = 0; i < 5; i++) {
@@ -436,5 +357,94 @@ exitObj = function(x,y) {
 exitObj.prototype.draw = function() {
 
 };
-*/
+
+draw = function() {
+    if (screenstate === 1) {
+        pushMatrix();
+        translate(-gamex,-gamey);
+        drawMap();
+        update();
+        popMatrix();
+        if (over) {
+            screenstate = -3;
+        }
+    } else if (screenstate === 0) {
+        if(transparent < 255) {
+            transparent+=1.5;
+        }
+        startScreen(transitiondir);
+    } else if (screenstate === -1) {
+        background(abs(255*invert), abs(255*invert), abs(255*invert));
+        optionsScreen(transitiondir);
+    } else if (screenstate === -2) {
+        if (transitiondir > 0) {
+            if (transitiondir < 620) {
+                startScreen(transitiondir);
+                optionsScreen(600-transitiondir);
+                transitiondir += 140;
+            } else {
+                transitiondir = -2;
+                screenstate = -1;
+            }
+        } else {
+            if (transitiondir > -620) {
+                startScreen(transitiondir+600);
+                optionsScreen(600-(transitiondir+600));
+                transitiondir -= 140;
+            } else {
+                transitiondir = 2;
+                screenstate = 0;
+            }
+        }
+    } else {
+        overScreen();
+    }
+};
+
+var mousePressed = function() {
+    if(transparent > 254) {
+        if (screenstate === 1) {
+            // Fire bullet
+            
+        } else if (screenstate === -1) {
+            if (mouseX > 220 && mouseX < 330 && mouseY > 30 && mouseY < 60) {
+                control *= -1;
+            } else if (mouseX > 230 && mouseX < 280 && mouseY > 80 && mouseY < 110) {
+                if(invert === 1) {
+                    invert = 0;
+                } else {
+                    invert = 1;
+                }
+            } else if (mouseX > 230 && mouseX < 280 && mouseY > 130 && mouseY < 160) {
+                leveltype *= -1;
+            } else if (mouseX > 130 && mouseX < 270 && mouseY > 280 && mouseY < 305) {
+                screenstate = -2;
+            }
+        } else if (screenstate === 0) {
+            if (mouseX > 100 && mouseX < 290 && mouseY > 220 && mouseY < 240) {
+                initMap();
+                screenstate = 1;
+            } else if (mouseX > 130 && mouseX < 270 && mouseY > 280 && mouseY < 305) {
+                screenstate = -2;
+            } else if (mouseX > 30 && mouseX < 360 && mouseY > 40 && mouseY < 90) {
+                if (flashy < 4) {
+                   flashy *= 15; 
+                }
+            }
+        } else if (screenstate === -3) {
+            var player = new playerObj(200,200);
+            var minions = [], bosses = [];
+            over = false;
+            screenstate = 0;
+        }
+    }
+};
+
+var keyPressed = function() {
+    keys[keyCode] = 1;
+};
+
+var keyReleased = function() {
+    keys[keyCode] = 0;
+};
 }};
