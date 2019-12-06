@@ -35,9 +35,11 @@ var control = 1, invert = 0, leveltype = 1;
 var over = false, score = 0, level = 1;
 var transitiondir = 2, flashy = 1, transparent = 0;
 var gamex = 0, gamey = 0;
-var screenstate = 1;
-var walls = [], grounds = [];
+var screenstate = 0;
 var player, minions = [], bosses = [], bullets = [], treasures = [];
+var walls = [], grounds = [], exitLoc;
+
+/* Game objects and functions */
 
 var checkWalls = function(xpos,ypos,xdir,ydir) {
     for(var i = 0; i < walls.length; i++) {
@@ -54,6 +56,7 @@ var playerObj = function(x,y) {
     this.pos = new PVector(x,y);
     this.dir = 0;
     this.health = 100;
+    this.atExit = false;
 };
 
 playerObj.prototype = {
@@ -209,34 +212,348 @@ groundObj.prototype = {
     }
 };
 
-var startObj = function(x,y) {
-    this.x = x;
-    this.y = y;
-};
+/* Map Objects and functions */
 
-startObj.prototype = {
-    draw : function() {
+var sampleMap = [
+    "....sprr..",
+    "....p.....",
+    "....r.....",
+    "....p.....",
+    "....r.....",
+    "...pppr...",
+    "....p.....",
+    "....r.....",
+    "....pp....",
+    ".....e...."
+];
 
+var startObj = function(x,y,up,down,left,right) {
+    player.pos.x = x+400;
+    player.pos.y = y+400;
+    var i;
+    if (up === 1) {
+        for (i = 5; i < 8; i++) {
+            walls.push(new wallObj(x+i*40,y+200));
+        }
+        for (i; i < 12; i++) {
+            grounds.push(new groundObj(x+i*40,y+200));
+        }
+        for (i; i < 15; i++) {
+            walls.push(new wallObj(x+i*40,y+200));
+        }
+        for (i = 0; i < 5; i++) {
+            walls.push(new wallObj(x+280,y+i*40));
+        }
+        for (i = 0; i < 5; i++) {
+            walls.push(new wallObj(x+480,y+i*40));
+        }
+        for (i = 0; i < 6; i++) {
+            grounds.push(new groundObj(x+320,y+i*40));
+        }
+        for (i = 0; i < 6; i++) {
+            grounds.push(new groundObj(x+360,y+i*40));
+        }
+        for (i = 0; i < 6; i++) {
+            grounds.push(new groundObj(x+400,y+i*40));
+        }
+        for (i = 0; i < 6; i++) {
+            grounds.push(new groundObj(x+440,y+i*40));
+        }
+    } else {
+        for (i = 5; i < 15; i++) {
+            walls.push(new wallObj(x+i*40,y+200));
+        }
     }
-
-};
-
-var pathObj = function(x,y) {
-    this.x = x;
-    this.y = y;
-};
-
-pathObj.prototype = {
-    draw : function() {
-
+    if (down === 1){
+        for (i = 5; i < 8; i++) {
+            walls.push(new wallObj(x+i*40,y+560));
+        }
+        for (i; i < 12; i++) {
+            grounds.push(new groundObj(x+i*40,y+560));
+        }
+        for (i; i < 15; i++) {
+            walls.push(new wallObj(x+i*40,y+560));
+        }
+        for (i = 15; i < 20; i++) {
+            walls.push(new wallObj(x+280,y+i*40));
+        }
+        for (i = 15; i < 20; i++) {
+            walls.push(new wallObj(x+480,y+i*40));
+        }
+        for (i = 14; i < 20; i++) {
+            grounds.push(new groundObj(x+320,y+i*40));
+        }
+        for (i = 14; i < 20; i++) {
+            grounds.push(new groundObj(x+360,y+i*40));
+        }
+        for (i = 14; i < 20; i++) {
+            grounds.push(new groundObj(x+400,y+i*40));
+        }
+        for (i = 14; i < 20; i++) {
+            grounds.push(new groundObj(x+440,y+i*40));
+        }
+    } else {
+        for (i = 5; i < 15; i++) {
+            walls.push(new wallObj(x+i*40,y+560));
+        }
     }
-
+    if (left === 1){
+        for (i = 5; i < 8; i++) {
+            walls.push(new wallObj(x+200,y+i*40));
+        }
+        for (i; i < 12; i++) {
+            grounds.push(new groundObj(x+200,y+i*40));
+        }
+        for (i; i < 15; i++) {
+            walls.push(new wallObj(x+200,y+i*40));
+        
+        for (i = 0; i < 5; i++) {
+            walls.push(new wallObj(x+i*40,y+480));
+        }
+        for (i = 0; i < 6; i++) {
+            grounds.push(new groundObj(x+i*40,y+320));
+        }
+        for (i = 0; i < 6; i++) {
+            grounds.push(new groundObj(x+i*40,y+360));
+        }
+        for (i = 0; i < 6; i++) {
+            grounds.push(new groundObj(x+i*40,y+400));
+        }
+        for (i = 0; i < 6; i++) {
+            grounds.push(new groundObj(x+i*40,y+440));
+        }}
+        for (i = 0; i < 5; i++) {
+            walls.push(new wallObj(x+i*40,y+280));
+        }
+    } else {
+        for (i = 5; i < 15; i++) {
+            walls.push(new wallObj(x+200,y+i*40));
+        }
+    }
+    if (right === 1){
+        for (i = 5; i < 8; i++) {
+            walls.push(new wallObj(x+560,y+i*40));
+        }
+        for (i; i < 12; i++) {
+            grounds.push(new groundObj(x+560,y+i*40));
+        }
+        for (i; i < 15; i++) {
+            walls.push(new wallObj(x+560,y+i*40));
+        }
+        for (i = 15; i < 20; i++) {
+            walls.push(new wallObj(x+i*40,y+480));
+        }
+        for (i = 14; i < 20; i++) {
+            grounds.push(new groundObj(x+i*40,y+320));
+        }
+        for (i = 14; i < 20; i++) {
+            grounds.push(new groundObj(x+i*40,y+360));
+        }
+        for (i = 14; i < 20; i++) {
+            grounds.push(new groundObj(x+i*40,y+400));
+        }
+        for (i = 14; i < 20; i++) {
+            grounds.push(new groundObj(x+i*40,y+440));
+        }
+        for (i = 14; i < 20; i++) {
+            walls.push(new wallObj(x+i*40,y+280));
+        }
+    } else {
+        for (i = 5; i < 15; i++) {
+            walls.push(new wallObj(x+560,y+i*40));
+        }
+    }
+    for (var i = 6; i < 14; i++) {
+        for (var j = 6; j < 14; j++) {
+            grounds.push(new groundObj(x+j*40,y+i*40));
+        }
+    }
 };
 
-var roomObj = function(x,y) {
-    this.x = x;
-    this.y = y;
+var pathObj = function(x,y,up,down,left,right) {
+    var i;
+    if (up === 1) {
+        for (i = 0; i < 8; i++) {
+            walls.push(new wallObj(x+280,y+i*40));
+        }
+        for (i = 0; i < 8; i++) {
+            walls.push(new wallObj(x+480,y+i*40));
+        }
+        for (i = 0; i < 8; i++) {
+            grounds.push(new groundObj(x+320,y+i*40));
+        }
+        for (i = 0; i < 8; i++) {
+            grounds.push(new groundObj(x+360,y+i*40));
+        }
+        for (i = 0; i < 8; i++) {
+            grounds.push(new groundObj(x+400,y+i*40));
+        }
+        for (i = 0; i < 8; i++) {
+            grounds.push(new groundObj(x+440,y+i*40));
+        }
+    } else {
+        for (i = 7; i < 13; i++) {
+            walls.push(new wallObj(x+i*40,y+280));
+        }
+    }
+    if (down === 1){
+        for (i = 12; i < 20; i++) {
+            walls.push(new wallObj(x+280,y+i*40));
+        }
+        for (i = 12; i < 20; i++) {
+            walls.push(new wallObj(x+480,y+i*40));
+        }
+        for (i = 12; i < 20; i++) {
+            grounds.push(new groundObj(x+320,y+i*40));
+        }
+        for (i = 12; i < 20; i++) {
+            grounds.push(new groundObj(x+360,y+i*40));
+        }
+        for (i = 12; i < 20; i++) {
+            grounds.push(new groundObj(x+400,y+i*40));
+        }
+        for (i = 12; i < 20; i++) {
+            grounds.push(new groundObj(x+440,y+i*40));
+        }
+    } else {
+        for (i = 7; i < 13; i++) {
+            walls.push(new wallObj(x+i*40,y+480));
+        }
+    }
+    if (left === 1){
+        for (i = 0; i < 7; i++) {
+            walls.push(new wallObj(x+i*40,y+280));
+        }
+        for (i = 0; i < 7; i++) {
+            walls.push(new wallObj(x+i*40,y+480));
+        }
+        for (i = 0; i < 8; i++) {
+            grounds.push(new groundObj(x+i*40,y+320));
+        }
+        for (i = 0; i < 8; i++) {
+            grounds.push(new groundObj(x+i*40,y+360));
+        }
+        for (i = 0; i < 8; i++) {
+            grounds.push(new groundObj(x+i*40,y+400));
+        }
+        for (i = 0; i < 8; i++) {
+            grounds.push(new groundObj(x+i*40,y+440));
+        }
+    } else {
+        for (i = 8; i < 12; i++) {
+            walls.push(new wallObj(x+280,y+i*40));
+        }
+    }
+    if (right === 1){
+        for (i = 13; i < 20; i++) {
+            walls.push(new wallObj(x+i*40,y+280));
+        }
+        for (i = 13; i < 20; i++) {
+            walls.push(new wallObj(x+i*40,y+480));
+        }
+        for (i = 12; i < 20; i++) {
+            grounds.push(new groundObj(x+i*40,y+320));
+        }
+        for (i = 12; i < 20; i++) {
+            grounds.push(new groundObj(x+i*40,y+360));
+        }
+        for (i = 12; i < 20; i++) {
+            grounds.push(new groundObj(x+i*40,y+400));
+        }
+        for (i = 12; i < 20; i++) {
+            grounds.push(new groundObj(x+i*40,y+440));
+        }
+    } else {
+        for (i = 8; i < 12; i++) {
+            walls.push(new wallObj(x+480,y+i*40));
+        }
+    }
+    grounds.push(new groundObj(x+320,y+320));
+    grounds.push(new groundObj(x+320,y+360));
+    grounds.push(new groundObj(x+320,y+400));
+    grounds.push(new groundObj(x+320,y+440));
+    grounds.push(new groundObj(x+360,y+320));
+    grounds.push(new groundObj(x+360,y+360));
+    grounds.push(new groundObj(x+360,y+400));
+    grounds.push(new groundObj(x+360,y+440));
+    grounds.push(new groundObj(x+400,y+320));
+    grounds.push(new groundObj(x+400,y+360));
+    grounds.push(new groundObj(x+400,y+400));
+    grounds.push(new groundObj(x+400,y+440));
+    grounds.push(new groundObj(x+440,y+320));
+    grounds.push(new groundObj(x+440,y+360));
+    grounds.push(new groundObj(x+440,y+400));
+    grounds.push(new groundObj(x+440,y+440));
+};
+
+var roomObj = function(x,y,up,down,left,right) {
     this.type;
+    var i;
+    if (up === 1) {
+        for (i = 0; i < 8; i++) {
+            walls.push(new wallObj(x+i*40,y));
+        }
+        for (i; i < 12; i++) {
+            grounds.push(new groundObj(x+i*40,y));
+        }
+        for (i; i < 20; i++) {
+            walls.push(new wallObj(x+i*40,y));
+        }
+    } else {
+        for (i = 0; i < 20; i++) {
+            walls.push(new wallObj(x+i*40,y));
+        }
+    }
+    if (down === 1){
+        for (i = 0; i < 8; i++) {
+            walls.push(new wallObj(x+i*40,y+760));
+        }
+        for (i; i < 12; i++) {
+            grounds.push(new groundObj(x+i*40,y+760));
+        }
+        for (i; i < 20; i++) {
+            walls.push(new wallObj(x+i*40,y+760));
+        }
+    } else {
+        for (i = 0; i < 20; i++) {
+            walls.push(new wallObj(x+i*40,y+760));
+        }
+    }
+    if (left === 1){
+        for (i = 0; i < 8; i++) {
+            walls.push(new wallObj(x,y+i*40));
+        }
+        for (i; i < 12; i++) {
+            grounds.push(new groundObj(x,y+i*40));
+        }
+        for (i; i < 20; i++) {
+            walls.push(new wallObj(x,y+i*40));
+        }
+    } else {
+        for (i = 0; i < 20; i++) {
+            walls.push(new wallObj(x,y+i*40));
+        }
+    }
+    if (right === 1){
+        for (i = 0; i < 8; i++) {
+            walls.push(new wallObj(x+760,y+i*40));
+        }
+        for (i; i < 12; i++) {
+            grounds.push(new groundObj(x+760,y+i*40));
+        }
+        for (i; i < 20; i++) {
+            walls.push(new wallObj(x+760,y+i*40));
+        }
+    } else {
+        for (i = 0; i < 20; i++) {
+            walls.push(new wallObj(x+760,y+i*40));
+        }
+    }
+    for (var i = 1; i < 19; i++) {
+        for (var j = 1; j < 19; j++) {
+            grounds.push(new groundObj(x+j*40,y+i*40));
+        }
+    }
     var x = random();
     if (x < 0.1) {
         this.type = 'treasure';
@@ -244,108 +561,201 @@ var roomObj = function(x,y) {
         this.type = 'boss';
         x = random();
         if (x < 0.3) {
-            bosses.push(new bossObj(this.x+200,this.y+200));
-            bosses.push(new bossObj(this.x+250,this.y+200));
+            bosses.push(new bossObj(x+200,y+200));
+            bosses.push(new bossObj(x+250,y+200));
         } else {
-            bosses.push(new bossObj(this.x+225,this.y+200));
+            bosses.push(new bossObj(x+225,y+200));
         }
     } else {
         this.type = 'normal';
         x = floor(random(3,10));
         for (var i = 0; i < x; i++) {
-            minions.push(new minionObj(this.x+150,this.y+200));
+            minions.push(new minionObj(x+150,y+200));
         }
     }
 };
 
-roomObj.prototype = {
-    draw : function() {
-
+var exitObj = function(x,y,up,down,left,right) {
+    exitLoc = new PVector(x+400,y+400);
+    var i;
+    if (up === 1) {
+        for (i = 5; i < 8; i++) {
+            walls.push(new wallObj(x+i*40,y+200));
+        }
+        for (i; i < 12; i++) {
+            grounds.push(new groundObj(x+i*40,y+200));
+        }
+        for (i; i < 15; i++) {
+            walls.push(new wallObj(x+i*40,y+200));
+        }
+        for (i = 0; i < 5; i++) {
+            walls.push(new wallObj(x+280,y+i*40));
+        }
+        for (i = 0; i < 5; i++) {
+            walls.push(new wallObj(x+480,y+i*40));
+        }
+        for (i = 0; i < 6; i++) {
+            grounds.push(new groundObj(x+320,y+i*40));
+        }
+        for (i = 0; i < 6; i++) {
+            grounds.push(new groundObj(x+360,y+i*40));
+        }
+        for (i = 0; i < 6; i++) {
+            grounds.push(new groundObj(x+400,y+i*40));
+        }
+        for (i = 0; i < 6; i++) {
+            grounds.push(new groundObj(x+440,y+i*40));
+        }
+    } else {
+        for (i = 5; i < 15; i++) {
+            walls.push(new wallObj(x+i*40,y+200));
+        }
     }
-
-};
-
-var mapObj = function() {
-
-};
-
-mapObj.prototype = {
-    draw : function() {
-
+    if (down === 1){
+        for (i = 5; i < 8; i++) {
+            walls.push(new wallObj(x+i*40,y+560));
+        }
+        for (i; i < 12; i++) {
+            grounds.push(new groundObj(x+i*40,y+560));
+        }
+        for (i; i < 15; i++) {
+            walls.push(new wallObj(x+i*40,y+560));
+        }
+        for (i = 15; i < 20; i++) {
+            walls.push(new wallObj(x+280,y+i*40));
+        }
+        for (i = 15; i < 20; i++) {
+            walls.push(new wallObj(x+480,y+i*40));
+        }
+        for (i = 14; i < 20; i++) {
+            grounds.push(new groundObj(x+320,y+i*40));
+        }
+        for (i = 14; i < 20; i++) {
+            grounds.push(new groundObj(x+360,y+i*40));
+        }
+        for (i = 14; i < 20; i++) {
+            grounds.push(new groundObj(x+400,y+i*40));
+        }
+        for (i = 14; i < 20; i++) {
+            grounds.push(new groundObj(x+440,y+i*40));
+        }
+    } else {
+        for (i = 5; i < 15; i++) {
+            walls.push(new wallObj(x+i*40,y+560));
+        }
     }
-
-};
-
-var sampleMap = [
-    "......wwwwwwwwwwwwwwwwwwww......",
-    "......wggggggggggggggggggw......",
-    "......wggggggggggggggggggww......",
-    "......wggggggggggggggggggww......",
-    "......wggggggggggggggggggww......",
-    "......wggggggggggggggggggww......",
-    "......wggggggggggggggggggww......",
-    "......wggggggggggggggggggww......",
-    "......wggggggggggggggggggww......",
-    "......wggggggggggggggggggww......",
-    "......wggggggggggggggggggw......",
-    "......wggggggggggggggggggww......",
-    "......wggggggggggggggggggww......",
-    "......wggggggggggggggggggww......",
-    "......wggggggggggggggggggww......",
-    "......wggggggggggggggggggww......",
-    "......wggggggggggggggggggww......",
-    "......wggggggggggggggggggww......",
-    "......wggggggggggggggggggww......",
-    "......wwwggggwww......",
-    "......wwwggggwww......",
-    "......wwwggggwww......",
-    "......wwwggggwww......",
-    "......wwwggggwww......",
-    "......wwwggggwww......",
-    "......wwwggggwww......",
-    "......wwwggggwww......",
-    "......wggggggw......",
-    "......wggggggw......",
-    "......wggggggw......",
-    "......wggggggw......",
-    "......wggggggw......",
-    "......wggggggw......",
-    "......wwggwwww......",
-    "......wwggwwww......",
-    "......wggggggw......",
-    "......wggggggw......",
-    "......wggggggw......",
-    "......wggggggw......",
-    "......wggggggw......",
-    "......wggggggw......",
-    "......wwwggwww......",
-    "......wwwggwww......",
-    "......wwwggwww......",
-    "......wwwggwww......",
-    "......wwwggwww......",
-    "......wwwggwww......",
-    "......wwwggwww......",
-    "......wwwggwww......",
-    "......wggggggw......",
-    "......wggggggw......",
-    "......wggggggw......",
-    "......wggggggw......",
-    "......wggggggw......",
-    "......wggggggw......",
-    "......wwwwwwww......",
-    ];
-    
-var initMap = function() {
-    for (var j = 0; j < sampleMap.length; j++) {
-        for (var i = 0; i < sampleMap[j].length; i++) {
-            if (sampleMap[j][i] === "w") {
-                walls.push(new wallObj(i*40,j*40));
-            } else if (sampleMap[j][i] === 'g') {
-                grounds.push(new groundObj(i*40,j*40));
-            } 
+    if (left === 1){
+        for (i = 5; i < 8; i++) {
+            walls.push(new wallObj(x+200,y+i*40));
+        }
+        for (i; i < 12; i++) {
+            grounds.push(new groundObj(x+200,y+i*40));
+        }
+        for (i; i < 15; i++) {
+            walls.push(new wallObj(x+200,y+i*40));
+        
+        for (i = 0; i < 5; i++) {
+            walls.push(new wallObj(x+i*40,y+480));
+        }
+        for (i = 0; i < 6; i++) {
+            grounds.push(new groundObj(x+i*40,y+320));
+        }
+        for (i = 0; i < 6; i++) {
+            grounds.push(new groundObj(x+i*40,y+360));
+        }
+        for (i = 0; i < 6; i++) {
+            grounds.push(new groundObj(x+i*40,y+400));
+        }
+        for (i = 0; i < 6; i++) {
+            grounds.push(new groundObj(x+i*40,y+440));
+        }}
+        for (i = 0; i < 5; i++) {
+            walls.push(new wallObj(x+i*40,y+280));
+        }
+    } else {
+        for (i = 5; i < 15; i++) {
+            walls.push(new wallObj(x+200,y+i*40));
+        }
+    }
+    if (right === 1){
+        for (i = 5; i < 8; i++) {
+            walls.push(new wallObj(x+560,y+i*40));
+        }
+        for (i; i < 12; i++) {
+            grounds.push(new groundObj(x+560,y+i*40));
+        }
+        for (i; i < 15; i++) {
+            walls.push(new wallObj(x+560,y+i*40));
+        }
+        for (i = 15; i < 20; i++) {
+            walls.push(new wallObj(x+i*40,y+480));
+        }
+        for (i = 14; i < 20; i++) {
+            grounds.push(new groundObj(x+i*40,y+320));
+        }
+        for (i = 14; i < 20; i++) {
+            grounds.push(new groundObj(x+i*40,y+360));
+        }
+        for (i = 14; i < 20; i++) {
+            grounds.push(new groundObj(x+i*40,y+400));
+        }
+        for (i = 14; i < 20; i++) {
+            grounds.push(new groundObj(x+i*40,y+440));
+        }
+        for (i = 14; i < 20; i++) {
+            walls.push(new wallObj(x+i*40,y+280));
+        }
+    } else {
+        for (i = 5; i < 15; i++) {
+            walls.push(new wallObj(x+560,y+i*40));
+        }
+    }
+    for (var i = 6; i < 14; i++) {
+        for (var j = 6; j < 14; j++) {
+            grounds.push(new groundObj(x+j*40,y+i*40));
         }
     }
 };
+
+var exitDraw = function() {
+    fill(255,0,0);
+    rect(exitLoc.x-40,exitLoc.y-40,80,80);
+};
+
+var generateMap = function(tileMap) {
+    for (var j = 0; j < tileMap.length; j++) {
+        for (var i = 0; i < tileMap[j].length; i++) {
+            var u = 0, d = 0, l = 0, r = 0;
+            if (i > 0 && tileMap[j][i-1] != '.') { // left
+                l = 1;
+            }
+            if (i < 9 && tileMap[j][i+1] != '.') { // right
+                r = 1;
+            }
+            if (j > 0 && tileMap[j-1][i] != '.') { // up
+                u = 1;
+            }
+            if (j < 9 && tileMap[j+1][i] != '.') { // down
+                d = 1;
+            }
+            switch (tileMap[j][i]) {
+                case 's': new startObj(i*800,j*800,u,d,l,r);
+                    break;
+                case 'p': new pathObj(i*800,j*800,u,d,l,r);
+                    break;
+                case 'r': new roomObj(i*800,j*800,u,d,l,r);
+                    break;
+                case 'e': new exitObj(i*800,j*800,u,d,l,r);
+            }
+        }
+    }
+};
+
+var resetMap = function() {
+    walls = [], grounds = [], minions = [], bosses = [], bullets = [], treasures = [];
+};
+
+/* Screen functions */
 
 var startScreen = function(x) {
     background(abs(255*invert), abs(255*invert), abs(255*invert));
@@ -397,38 +807,47 @@ var optionsScreen = function(x) {
 };
 
 var overScreen = function() {
-
+    background(abs(255*invert -25),abs(255*invert -25),abs(255*invert -25));
+    fill(abs(255*invert -125),abs(255*invert -125),abs(255*invert -125));
+    textSize(50);
+    text("Game Over.",20,100);
+    text("Score: "+score,40,200);
+    textSize(35);
+    text("Click anywhere to go back.", 80, 300);
 };
+
+/* Main functions and event listeners */
 
 var update = function() {
     background(abs(255*invert -25),abs(255*invert -25),abs(255*invert -25));
     for (var i = 0; i < walls.length; i++) {
         walls[i].draw();
     }
-    for (i = 0; i < grounds.length; i++) {
+    for (var i = 0; i < grounds.length; i++) {
         grounds[i].draw();
     }
-    for (i = 0; i < minions.length; i++) {
+    for (var i = 0; i < minions.length; i++) {
         minions[i].action();
         minions[i].draw();
     }
-    for (i = 0; i < bosses.length; i++) {
+    for (var i = 0; i < bosses.length; i++) {
         bosses[i].action();
         bosses[i].draw();
     }
-    for (i = 0; i < bullets.length; i++) {
-        if (bullets[i].move() === 0) {
-            bullets.splice(i);
-            i--;
-        } else {
-            bullets[i].draw();
-        }
-    }
+    exitDraw();
     player.move();
     player.draw();
+    if(player.pos.dist(exitLoc) < 25) {
+        level++;
+        if (level === 11) {
+            screenstate = -3;
+        } else {
+            resetMap();
+            generateMap();
+        }
+    }
 };
-player = new playerObj(200,250);
-initMap();
+
 draw = function() {
     if (screenstate === 1) {
         pushMatrix();
@@ -475,7 +894,7 @@ var mousePressed = function() {
     if(transparent > 254) {
         if (screenstate === 1) {
             // Fire bullet
-            
+            bullets.push(new bulletObj(player.pos.x,player.pos.y,player.dir));
         } else if (screenstate === -1) {
             if (mouseX > 220 && mouseX < 330 && mouseY > 30 && mouseY < 60) {
                 control *= -1;
@@ -492,7 +911,8 @@ var mousePressed = function() {
             }
         } else if (screenstate === 0) {
             if (mouseX > 200 && mouseX < 390 && mouseY > 220 && mouseY < 240) {
-                initMap();
+                player = new playerObj(0,0);
+                generateMap(sampleMap);
                 screenstate = 1;
             } else if (mouseX > 230 && mouseX < 370 && mouseY > 300 && mouseY < 325) {
                 screenstate = -2;
@@ -502,8 +922,8 @@ var mousePressed = function() {
                 }
             }
         } else if (screenstate === -3) {
-            var player = new playerObj(200,200);
-            var minions = [], bosses = [];
+            player = new playerObj(0,0);
+            resetMap();
             over = false, score = 0, level = 1;
             screenstate = 0;
         }
