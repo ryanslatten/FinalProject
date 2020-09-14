@@ -1,7 +1,7 @@
 //  *HOW GAME IS DESIGNED*  \\
 // The players goal is to find the exit to each level and raise their score defeating enemies and finding treasures
 // The game starts at level 1 and can either go on forever or stop at level 10
-// each level is a 10x10 grid of blocks and each block is a 20x20 space and each space is 40x40 pixels
+// each level is a 5x5 grid of blocks and each block is a 20x20 space and each space is 40x40 pixels
 // each map has a starting room, an exit room, and a path between them
 // the room types are boss, normal, and treasure
 // normal rooms hold regular minions to fight. Common
@@ -20,24 +20,41 @@ frameRate(60);
         'data/title.png',
         'data/snowman.png',
         'data/pRightFace.png',
-        'data/gobblerMan.png'; 
+        'data/gobblerMan.png',
+        'data/treasure.png',
+        'data/exit.png',
+        'data/bullet.png';
 */
+
+// Audio:
+var menuMusic = new Audio();
+menuMusic.src = 'data/menu.mp3', menuMusic.loop = true;
+var lvl1Music = new Audio();
+lvl1Music.src = 'data/level1.mp3', lvl1Music.loop = true;
+var lvl2Music = new Audio();
+lvl2Music.src = 'data/level2.mp3', lvl2Music.loop = true;
+var gameOverMusic = new Audio();
+gameOverMusic.src = 'data/gameover.mp3', gameOverMusic.loop = true;
 
 // Images:
 var playerImg = loadImage('data/title.png');
 var minion1Img = loadImage('data/pRightFace.png');
-var minion2Img = loadImage('data/snowman.png');
-var minion3Img = loadImage('data/gobblerMan.png');
+var minion2Img = loadImage('data/gobblerMan.png');
+var bossImg = loadImage('data/snowman.png');
+var treasureImg = loadImage('data/treasure.png');
+var exitImg = loadImage('data/exit.png');
+var bulletImg = loadImage('data/bullet.png');
 
 // Global variables:
 var keys = [];
-var control = 1, invert = 0, leveltype = 1;
-var over = false, score = 0, level = 1;
+var control = 1, invert = 0, mode = 1;
+var over = false, score = 0, level = 0;
 var transitiondir = 2, flashy = 1, transparent = 0;
 var gamex = 0, gamey = 0;
 var screenstate = 0;
 var player, minions = [], bosses = [], bullets = [], treasures = [];
-var walls = [], grounds = [], exitLoc;
+var map = [], walls = [], grounds = [], exitLoc;
+angleMode = "radians";
 
 /* Game objects and functions */
 
@@ -55,7 +72,7 @@ var checkWalls = function(xpos,ypos,xdir,ydir) {
 var playerObj = function(x,y) {
     this.pos = new PVector(x,y);
     this.dir = 0;
-    this.health = 100;
+    this.health = 500;
     this.atExit = false;
 };
 
@@ -104,8 +121,25 @@ playerObj.prototype = {
                 }
             }
         }
-        gamex = this.pos.x - 200;
-        gamey = this.pos.y - 200;
+        for (var i = 0; i < treasures.length; i++) {
+            if (dist(this.pos.x+20,this.pos.y+20,treasures[i].pos.x+40,treasures[i].pos.y+40) < 40 && !treasures[i].taken) {
+                treasures[i].taken = true;
+                score += 400;
+                this.health = 600;
+            }
+        }
+        if (keys[32] === 1 && frameCount % 6 === 0) {
+            if (mode > 0) {
+                bullets.push(new bulletObj(player.pos.x,player.pos.y,player.dir,true));
+            } else {
+                bullets.push(new bulletObj(player.pos.x,player.pos.y,player.dir-PI/5,true));
+                bullets.push(new bulletObj(player.pos.x,player.pos.y,player.dir-PI/3,true));
+                bullets.push(new bulletObj(player.pos.x,player.pos.y,player.dir+PI/5,true));
+                bullets.push(new bulletObj(player.pos.x,player.pos.y,player.dir+PI/3,true));
+            }
+        }
+        gamex = this.pos.x - 300;
+        gamey = this.pos.y - 300;
         if (gamex < 0) {
             gamex = 0;
         } else if (gamex > 8000) {
@@ -118,114 +152,218 @@ playerObj.prototype = {
         }
     },
 
+    changeAngle : function() {
+        if (mouseX > 300) {
+            var adj = 300 - mouseX;
+            var opp = 300 - mouseY;
+            this.dir = atan(opp / adj);
+        } else {
+            var adj = mouseX - 300;
+            var opp = mouseY - 300;
+            this.dir = atan(opp / adj);
+            this.dir -= PI;
+        }
+    },
+
     draw : function() {
         image(playerImg, this.pos.x, this.pos.y, 40,40);
+        textSize(20);
+        fill(255,25,0);
+        text("Health: "+this.health,gamex+20,gamey+30);
     }
 };
 
-var bulletObj = function(x,y,direction) {
+var bulletObj = function(x,y,direction, yours) {
     this.pos = new PVector(x,y);
-    this.v = new PVector(cos(direction)*5,sin(direction)*5);
+    this.v = new PVector(cos(direction)*16,sin(direction)*16);
+    this.yours = yours;
 };
 
 bulletObj.prototype = {
     move : function() {
         this.pos.add(this.v);
-        if(checkWalls(this.pos.x, this.pos.y,0,0)) {
-            return 1;
+        for (var i = 0; i < walls.length; i++) {
+            if (dist(this.pos.x+10,this.pos.y+10,walls[i].pos.x+20,walls[i].pos.y+20) < 20) {
+                return 1;
+            }
         }
+        if(dist(this.pos.x+this.v.x+10,this.pos.y+this.v.y+10,player.pos.x+20,player.pos.y+10) < 20 && !this.yours) {
+            player.health -= 10;
+            if (player.health < 1) {
+                screenstate = -3;
+                if (level === 2) {
+                    lvl2Music.pause();
+                    gameOverMusic.play();
+                } else {
+                    lvl1Music.pause();
+                    gameOverMusic.play();
+                }
+            }
+            return 1;
+        } else {
+            for (var i = 0; i < minions.length; i++) {
+                if (dist(this.pos.x+10,this.pos.y+10,minions[i].pos.x+40,minions[i].pos.y+40) < 40 && this.yours) {
+                    minions[i].health -= 10;
+                    if (minions[i].health < 1) {
+                        minions.splice(i,1);
+                        score += 80;
+                    }
+                    return 1;
+                }
+            }
+            for (var i = 0; i < bosses.length; i++) {
+                if (dist(this.pos.x+10,this.pos.y+10,bosses[i].pos.x+80,bosses[i].pos.y+80) < 80 && this.yours) {
+                    bosses[i].health -= 10;
+                    if (bosses[i].health < 1) {
+                        bosses.splice(i,1);
+                        score += 160;
+                        player.health += 100;
+                    }
+                    return 1;
+                }
+            }
+         }
         return 0;
     },
     draw : function() {
-        fill(255*invert-84, 255*invert-80, 255*invert-80, 170);
-        ellipse(200,200,13,13);
-        fill(255*invert-255, 255*invert-0, 255*invert-0,210);
-        ellipse(200,200,10,10);
+        image(bulletImg,this.pos.x,this.pos.y,20,20);
     }
 };
 
 var minionObj = function(x,y) {
     this.pos = new PVector(x,y);
-    this.dir = 0;
+    this.health = 50;
+    var x = random();
+    this.image;
+    if (x < 0.5) {
+        this.image = minion1Img;
+    } else {
+        this.image = minion2Img;
+    }
 };
 
 minionObj.prototype = {
     action : function() {
-
+        if( this.pos.dist(player.pos) < 420) {
+            console.log(frameCount);
+            if (frameCount % 10 === 0) {
+                if (this.pos.x+40 > player.pos.x+20) {
+                    var adj = this.pos.x+20 - player.pos.x+40;
+                    var opp = this.pos.y+20 - player.pos.y+40;
+                    var dir = atan(opp / adj);
+                    dir -= 9*PI/8;
+                    bullets.push(new bulletObj(this.pos.x+40,this.pos.y,dir,false));
+                } else {
+                    var adj = this.pos.x+20 - player.pos.x+40;
+                    var opp = this.pos.y+20 - player.pos.y+40;
+                    var dir = atan(opp / adj);
+                    dir += PI/8;
+                    bullets.push(new bulletObj(this.pos.x+40,this.pos.y,dir,false));
+                }
+            }
+        }
     },
     draw : function() {
-        var x = random();
-        if (x < 0.33) {
-            image(minion1Img,this.pos.x,this.pos.y,40,40);
-        } else if (x < 0.66) {
-            image(minion2Img,this.pos.x,this.pos.y,40,40);
-        } else {
-            image(minion3Img,this.pos.x,this.pos.y,40,40);
-        }
+        image(this.image,this.pos.x,this.pos.y,80,80);
     }
 };
 
 var bossObj = function(x,y) {
-    this.x = x;
-    this.y = y;
+    this.pos = new PVector(x,y);
+    this.health = 750;
+    this.i = 0;
 };
 
 bossObj.prototype = {
     action : function() {
-
+        if( this.pos.dist(player.pos) < 380) {
+            // hella Fire at player
+            if (frameCount % 6 === 0) {
+                for (var i = 0; i < 15; i++) {
+                    bullets.push(new bulletObj(this.pos.x+40,this.pos.y+40,i*PI/6+this.i/3,false));
+                }
+                this.i+=2;
+                if (this.i > 6) {
+                    this.i = 0;
+                }
+            }
+        }
     },
     draw : function() {
-
+        fill(255,25,0);
+        textSize(25);
+        text(this.health, this.pos.x-20,this.pos.y-60);
+        image(bossImg,this.pos.x-40,this.pos.y-40,160,160);
     }
 };
 
 var treasureObj = function(x,y) {
-
+    this.pos = new PVector(x,y);
+    this.taken = false;
 };
 
-treasureObj.prototype = {
-
+treasureObj.prototype.draw = function() {
+    if (!this.taken) {
+        image(treasureImg,this.pos.x,this.pos.y,120,120);
+    }
 };
 
 var wallObj = function(x,y) {
     this.pos = new PVector(x,y);
 };
 
-wallObj.prototype = {
-    draw : function() {
-        noStroke();
-        fill(194,100,0);
-        rect(this.pos.x,this.pos.y, 40,40);
-        stroke(0,0,0);
-    }
-    
+wallObj.prototype.draw = function() {
+    noStroke();
+    fill(194,100,0);
+    rect(this.pos.x,this.pos.y, 40,40);
+    stroke(0,0,0);
 };
     
 var groundObj = function(x,y) {
     this.pos = new PVector(x,y);
 };
 
-groundObj.prototype = {
-    draw : function() {
-        fill(255, 140, 0);
-        rect(this.pos.x,this.pos.y,40,40);
+groundObj.prototype.draw = function() {
+    fill(255, 140, 0);
+    rect(this.pos.x,this.pos.y,40,40);
+};
+
+/* Levels stored here */
+
+var changeLevel = function() {
+    level++;
+    if (level === 1) {
+        map =
+        [
+            ".tp.spb...",
+            "..npp.....",
+            "....n.....",
+            "....p.....",
+            "....n.....",
+            "...pppb...",
+            "...np.....",
+            "....b.....",
+            "....pp....",
+            ".....e...."
+        ];
+    } else if (level === 2) {
+        map =
+        [
+            "...eppnpp.",
+            "..s.....t.",
+            "..pnpnpbp.",
+            "......np..",
+            "..........",
+            "..........",
+            "..........",
+            "..........",
+            "..........",
+            "..........",
+        ];
     }
 };
 
 /* Map Objects and functions */
-
-var sampleMap = [
-    "....sprr..",
-    "....p.....",
-    "....r.....",
-    "....p.....",
-    "....r.....",
-    "...pppr...",
-    "....p.....",
-    "....r.....",
-    "....pp....",
-    ".....e...."
-];
 
 var startObj = function(x,y,up,down,left,right) {
     player.pos.x = x+400;
@@ -486,8 +624,149 @@ var pathObj = function(x,y,up,down,left,right) {
     grounds.push(new groundObj(x+440,y+440));
 };
 
-var roomObj = function(x,y,up,down,left,right) {
-    this.type;
+var treasureRoom = function(x,y,up,down,left,right) {
+    treasures.push(new treasureObj(x+320,y+320));
+    var i;
+    if (up === 1) {
+        for (i = 5; i < 8; i++) {
+            walls.push(new wallObj(x+i*40,y+200));
+        }
+        for (i; i < 12; i++) {
+            grounds.push(new groundObj(x+i*40,y+200));
+        }
+        for (i; i < 15; i++) {
+            walls.push(new wallObj(x+i*40,y+200));
+        }
+        for (i = 0; i < 5; i++) {
+            walls.push(new wallObj(x+280,y+i*40));
+        }
+        for (i = 0; i < 5; i++) {
+            walls.push(new wallObj(x+480,y+i*40));
+        }
+        for (i = 0; i < 6; i++) {
+            grounds.push(new groundObj(x+320,y+i*40));
+        }
+        for (i = 0; i < 6; i++) {
+            grounds.push(new groundObj(x+360,y+i*40));
+        }
+        for (i = 0; i < 6; i++) {
+            grounds.push(new groundObj(x+400,y+i*40));
+        }
+        for (i = 0; i < 6; i++) {
+            grounds.push(new groundObj(x+440,y+i*40));
+        }
+    } else {
+        for (i = 5; i < 15; i++) {
+            walls.push(new wallObj(x+i*40,y+200));
+        }
+    }
+    if (down === 1){
+        for (i = 5; i < 8; i++) {
+            walls.push(new wallObj(x+i*40,y+560));
+        }
+        for (i; i < 12; i++) {
+            grounds.push(new groundObj(x+i*40,y+560));
+        }
+        for (i; i < 15; i++) {
+            walls.push(new wallObj(x+i*40,y+560));
+        }
+        for (i = 15; i < 20; i++) {
+            walls.push(new wallObj(x+280,y+i*40));
+        }
+        for (i = 15; i < 20; i++) {
+            walls.push(new wallObj(x+480,y+i*40));
+        }
+        for (i = 14; i < 20; i++) {
+            grounds.push(new groundObj(x+320,y+i*40));
+        }
+        for (i = 14; i < 20; i++) {
+            grounds.push(new groundObj(x+360,y+i*40));
+        }
+        for (i = 14; i < 20; i++) {
+            grounds.push(new groundObj(x+400,y+i*40));
+        }
+        for (i = 14; i < 20; i++) {
+            grounds.push(new groundObj(x+440,y+i*40));
+        }
+    } else {
+        for (i = 5; i < 15; i++) {
+            walls.push(new wallObj(x+i*40,y+560));
+        }
+    }
+    if (left === 1){
+        for (i = 5; i < 8; i++) {
+            walls.push(new wallObj(x+200,y+i*40));
+        }
+        for (i; i < 12; i++) {
+            grounds.push(new groundObj(x+200,y+i*40));
+        }
+        for (i; i < 15; i++) {
+            walls.push(new wallObj(x+200,y+i*40));
+        
+        for (i = 0; i < 5; i++) {
+            walls.push(new wallObj(x+i*40,y+480));
+        }
+        for (i = 0; i < 6; i++) {
+            grounds.push(new groundObj(x+i*40,y+320));
+        }
+        for (i = 0; i < 6; i++) {
+            grounds.push(new groundObj(x+i*40,y+360));
+        }
+        for (i = 0; i < 6; i++) {
+            grounds.push(new groundObj(x+i*40,y+400));
+        }
+        for (i = 0; i < 6; i++) {
+            grounds.push(new groundObj(x+i*40,y+440));
+        }}
+        for (i = 0; i < 5; i++) {
+            walls.push(new wallObj(x+i*40,y+280));
+        }
+    } else {
+        for (i = 5; i < 15; i++) {
+            walls.push(new wallObj(x+200,y+i*40));
+        }
+    }
+    if (right === 1){
+        for (i = 5; i < 8; i++) {
+            walls.push(new wallObj(x+560,y+i*40));
+        }
+        for (i; i < 12; i++) {
+            grounds.push(new groundObj(x+560,y+i*40));
+        }
+        for (i; i < 15; i++) {
+            walls.push(new wallObj(x+560,y+i*40));
+        }
+        for (i = 15; i < 20; i++) {
+            walls.push(new wallObj(x+i*40,y+480));
+        }
+        for (i = 14; i < 20; i++) {
+            grounds.push(new groundObj(x+i*40,y+320));
+        }
+        for (i = 14; i < 20; i++) {
+            grounds.push(new groundObj(x+i*40,y+360));
+        }
+        for (i = 14; i < 20; i++) {
+            grounds.push(new groundObj(x+i*40,y+400));
+        }
+        for (i = 14; i < 20; i++) {
+            grounds.push(new groundObj(x+i*40,y+440));
+        }
+        for (i = 14; i < 20; i++) {
+            walls.push(new wallObj(x+i*40,y+280));
+        }
+    } else {
+        for (i = 5; i < 15; i++) {
+            walls.push(new wallObj(x+560,y+i*40));
+        }
+    }
+    for (var i = 6; i < 14; i++) {
+        for (var j = 6; j < 14; j++) {
+            grounds.push(new groundObj(x+j*40,y+i*40));
+        }
+    }
+};
+
+var roomObj = function(x,y,up,down,left,right,type) {
     var i;
     if (up === 1) {
         for (i = 0; i < 8; i++) {
@@ -554,24 +833,19 @@ var roomObj = function(x,y,up,down,left,right) {
             grounds.push(new groundObj(x+j*40,y+i*40));
         }
     }
-    var x = random();
-    if (x < 0.1) {
-        this.type = 'treasure';
-    } else if (x < 0.35) {
-        this.type = 'boss';
-        x = random();
-        if (x < 0.3) {
-            bosses.push(new bossObj(x+200,y+200));
-            bosses.push(new bossObj(x+250,y+200));
-        } else {
-            bosses.push(new bossObj(x+225,y+200));
-        }
+    if (type === 2) {
+        bosses.push(new bossObj(x+360,y+360));
     } else {
-        this.type = 'normal';
-        x = floor(random(3,10));
-        for (var i = 0; i < x; i++) {
-            minions.push(new minionObj(x+150,y+200));
-        }
+        minions.push(new minionObj(x+160,y+240));
+        minions.push(new minionObj(x+160,y+480));
+        minions.push(new minionObj(x+320,y+120));
+        minions.push(new minionObj(x+320,y+360));
+        minions.push(new minionObj(x+320,y+600));
+        minions.push(new minionObj(x+480,y+120));
+        minions.push(new minionObj(x+480,y+360));
+        minions.push(new minionObj(x+480,y+600));
+        minions.push(new minionObj(x+640,y+240));
+        minions.push(new minionObj(x+640,y+480));
     }
 };
 
@@ -718,8 +992,7 @@ var exitObj = function(x,y,up,down,left,right) {
 };
 
 var exitDraw = function() {
-    fill(255,0,0);
-    rect(exitLoc.x-40,exitLoc.y-40,80,80);
+    image(exitImg,exitLoc.x-40,exitLoc.y-40,80,80);
 };
 
 var generateMap = function(tileMap) {
@@ -743,16 +1016,21 @@ var generateMap = function(tileMap) {
                     break;
                 case 'p': new pathObj(i*800,j*800,u,d,l,r);
                     break;
-                case 'r': new roomObj(i*800,j*800,u,d,l,r);
+                case 'n': new roomObj(i*800,j*800,u,d,l,r,1);
+                    break;
+                case 'b': new roomObj(i*800,j*800,u,d,l,r,2);
+                    break;
+                case 't': new treasureRoom(i*800,j*800,u,d,l,r);
                     break;
                 case 'e': new exitObj(i*800,j*800,u,d,l,r);
+                    break;
             }
         }
     }
 };
 
 var resetMap = function() {
-    walls = [], grounds = [], minions = [], bosses = [], bullets = [], treasures = [];
+    map = [], walls = [], grounds = [], minions = [], bosses = [], bullets = [], treasures = [];
 };
 
 /* Screen functions */
@@ -797,12 +1075,8 @@ var optionsScreen = function(x) {
     } else {
         text(" NO", 230+x, 100);
     }
-    text("Infinite Levels:", 40+x, 150);
-    if (leveltype > 0) {
-        text("OFF", 230+x, 150);
-    } else {
-        text("ON", 230+x, 150);
-    }
+    text("Use SPACE to fire at bad guys!", 60+x,200);
+    text("Use the MOUSE to aim your gun!", 60+x, 250);
     text("Main Menu", 135+x, 300);
 };
 
@@ -810,8 +1084,8 @@ var overScreen = function() {
     background(abs(255*invert -25),abs(255*invert -25),abs(255*invert -25));
     fill(abs(255*invert -125),abs(255*invert -125),abs(255*invert -125));
     textSize(50);
-    text("Game Over.",20,100);
-    text("Score: "+score,40,200);
+    text("Game Over.",170,100);
+    text("Score: "+score,190,200);
     textSize(35);
     text("Click anywhere to go back.", 80, 300);
 };
@@ -826,6 +1100,18 @@ var update = function() {
     for (var i = 0; i < grounds.length; i++) {
         grounds[i].draw();
     }
+    for (var i = 0; i < treasures.length; i++) {
+        treasures[i].draw();
+    }
+    for ( var i = 0; i < bullets.length; i++) {
+        if (bullets[i].move() === 1) {
+            bullets.splice(i,1);
+            i--;
+        } 
+    }
+    for (var i = 0; i < bullets.length; i++) {
+        bullets[i].draw();
+    }
     for (var i = 0; i < minions.length; i++) {
         minions[i].action();
         minions[i].draw();
@@ -836,23 +1122,31 @@ var update = function() {
     }
     exitDraw();
     player.move();
+    player.changeAngle();
     player.draw();
-    if(player.pos.dist(exitLoc) < 25) {
-        level++;
-        if (level === 11) {
+    if(dist(player.pos.x+20,player.pos.y+20,exitLoc.x+40,exitLoc.y+40) < 40) {
+        if (level === 2) {
             screenstate = -3;
+            lvl2Music.pause();
+            gameOverMusic.play();
         } else {
             resetMap();
-            generateMap();
+            changeLevel();
+            generateMap(map);
+            lvl1Music.pause();
+            lvl2Music.play();
         }
     }
 };
-
+menuMusic.play();
 draw = function() {
     if (screenstate === 1) {
         pushMatrix();
         translate(-gamex,-gamey);
         update();
+        fill(abs(255*invert-255), abs(255*invert)-55, abs(255*invert));
+        textSize(20);
+        text("Score: "+score,gamex+450,gamey+30);
         popMatrix();
         if (over) {
             screenstate = -3;
@@ -892,10 +1186,7 @@ draw = function() {
 
 var mousePressed = function() {
     if(transparent > 254) {
-        if (screenstate === 1) {
-            // Fire bullet
-            bullets.push(new bulletObj(player.pos.x,player.pos.y,player.dir));
-        } else if (screenstate === -1) {
+        if (screenstate === -1) {
             if (mouseX > 220 && mouseX < 330 && mouseY > 30 && mouseY < 60) {
                 control *= -1;
             } else if (mouseX > 230 && mouseX < 280 && mouseY > 80 && mouseY < 110) {
@@ -912,8 +1203,11 @@ var mousePressed = function() {
         } else if (screenstate === 0) {
             if (mouseX > 200 && mouseX < 390 && mouseY > 220 && mouseY < 240) {
                 player = new playerObj(0,0);
-                generateMap(sampleMap);
+                changeLevel();
+                generateMap(map);
                 screenstate = 1;
+                menuMusic.pause();
+                lvl1Music.play();
             } else if (mouseX > 230 && mouseX < 370 && mouseY > 300 && mouseY < 325) {
                 screenstate = -2;
             } else if (mouseX > 130 && mouseX < 460 && mouseY > 40 && mouseY < 90) {
@@ -923,15 +1217,26 @@ var mousePressed = function() {
             }
         } else if (screenstate === -3) {
             player = new playerObj(0,0);
-            resetMap();
             over = false, score = 0, level = 1;
             screenstate = 0;
+            resetMap();
+            gameOverMusic.pause();
+            menuMusic.play();
         }
     }
 };
 
 var keyPressed = function() {
     keys[keyCode] = 1;
+    if (keyCode === 76 && screenstate === 1 && level === 1) {
+        resetMap();
+        changeLevel();
+        generateMap(map);
+        lvl1Music.pause();
+        lvl2Music.play();
+    } else if (screenstate === 1 && keyCode === 71) {
+        mode *= -1;
+    }
 };
 
 var keyReleased = function() {
